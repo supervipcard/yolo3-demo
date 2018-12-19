@@ -49,21 +49,21 @@ def _main():
 
     # Train with frozen layers first, to get a stable loss.
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
-    # if True:
-    #     model.compile(optimizer=Adam(lr=1e-3), loss={
-    #         # use custom yolo_loss Lambda layer.
-    #         'yolo_loss': lambda y_true, y_pred: y_pred})
-    #
-    #     batch_size = 16
-    #     print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-    #     model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
-    #             steps_per_epoch=max(1, num_train//batch_size),
-    #             validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
-    #             validation_steps=max(1, num_val//batch_size),
-    #             epochs=50,
-    #             initial_epoch=0,
-    #             callbacks=[logging, checkpoint])
-    #     model.save_weights(log_dir + 'trained_weights_stage_1.h5')
+    if True:
+        model.compile(optimizer=Adam(lr=1e-3), loss={
+            # use custom yolo_loss Lambda layer.
+            'yolo_loss': lambda y_true, y_pred: y_pred})
+
+        batch_size = 16
+        print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
+        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+                steps_per_epoch=max(1, num_train//batch_size),
+                validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
+                validation_steps=max(1, num_val//batch_size),
+                epochs=50,
+                initial_epoch=0,
+                callbacks=[logging, checkpoint])
+        model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
     # Unfreeze and continue training, to fine-tune.
     # Train longer if the result is not good.
