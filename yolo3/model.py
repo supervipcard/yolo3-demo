@@ -17,7 +17,7 @@ from yolo3.utils import compose
 @wraps(Conv2D)
 def DarknetConv2D(*args, **kwargs):
     """Wrapper to set Darknet parameters for Convolution2D."""
-    darknet_conv_kwargs = {'kernel_regularizer': l2(5e-4)}
+    darknet_conv_kwargs = {'kernel_regularizer': l2(5e-4)}    # 施加在权重上的L2正则项
     darknet_conv_kwargs['padding'] = 'valid' if kwargs.get('strides')==(2,2) else 'same'
     darknet_conv_kwargs.update(kwargs)
     return Conv2D(*args, **darknet_conv_kwargs)
@@ -69,20 +69,20 @@ def make_last_layers(x, num_filters, out_filters):
 
 def yolo_body(inputs, num_anchors, num_classes):
     """Create YOLO_V3 model CNN body in Keras."""
-    darknet = Model(inputs, darknet_body(inputs))
-    x, y1 = make_last_layers(darknet.output, 512, num_anchors*(num_classes+5))
+    darknet = Model(inputs, darknet_body(inputs))    # 函数式模型，传入输入和输出
+    x, y1 = make_last_layers(darknet.output, 512, num_anchors*(num_classes+5))    # 13*13*512， 13*13*num_anchors*(num_classes+5)
 
     x = compose(
             DarknetConv2D_BN_Leaky(256, (1,1)),
-            UpSampling2D(2))(x)
-    x = Concatenate()([x,darknet.layers[152].output])
-    x, y2 = make_last_layers(x, 256, num_anchors*(num_classes+5))
+            UpSampling2D(2))(x)    # 26*26*256
+    x = Concatenate()([x,darknet.layers[152].output])    # 26*26*256 + 26*26*512 = 26*26*768
+    x, y2 = make_last_layers(x, 256, num_anchors*(num_classes+5))    # 26*26*256， 26*26*num_anchors*(num_classes+5)
 
     x = compose(
             DarknetConv2D_BN_Leaky(128, (1,1)),
-            UpSampling2D(2))(x)
-    x = Concatenate()([x,darknet.layers[92].output])
-    x, y3 = make_last_layers(x, 128, num_anchors*(num_classes+5))
+            UpSampling2D(2))(x)    # 52*52*128
+    x = Concatenate()([x,darknet.layers[92].output])    # 52*52*128 + 52*52*256 = 52*52*384
+    x, y3 = make_last_layers(x, 128, num_anchors*(num_classes+5))    # 52*52*128， 52*52*num_anchors*(num_classes+5)
 
     return Model(inputs, [y1,y2,y3])
 
